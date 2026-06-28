@@ -37,6 +37,23 @@ const server = http.createServer(async (req, res) => {
   // Cuentas / API primero.
   if (await handleApi(req, res)) return;
 
+  // Lista de salas ABIERTAS (no empezadas, no llenas) para entrar sin código.
+  if (req.url.split('?')[0] === '/api/rooms') {
+    const list = [];
+    for (const [code, room] of rooms) {
+      if (!room.started && room.clients.size > 0 && room.clients.size < 4) {
+        list.push({
+          code,
+          host: room.names.get(0) || 'Sala',
+          count: room.clients.size,
+        });
+      }
+    }
+    res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
+    res.end(JSON.stringify({ rooms: list }));
+    return;
+  }
+
   let urlPath = decodeURIComponent(req.url.split('?')[0]);
   if (urlPath === '/') urlPath = '/index.html';
   let filePath = path.join(PUBLIC, urlPath);
@@ -83,7 +100,7 @@ wss.on('connection', (ws) => {
 
     if (m.t === 'create') {
       const code = makeCode();
-      const room = { clients: new Map(), names: new Map(), nextId: 0 };
+      const room = { clients: new Map(), names: new Map(), nextId: 0, started: false };
       rooms.set(code, room);
       const id = room.nextId++;
       room.clients.set(id, ws); room.names.set(id, m.name || 'Anfitrión');
@@ -100,6 +117,11 @@ wss.on('connection', (ws) => {
       ws.roomCode = m.code; ws.id = id;
       send(ws, { t: 'joined', code: m.code, id, players: roomPlayers(room) });
       broadcast(room, { t: 'players', players: roomPlayers(room) });
+      return;
+    }
+    if (m.t === 'started') {
+      const room = rooms.get(ws.roomCode);
+      if (room) room.started = true; // ya no aparece en "salas disponibles"
       return;
     }
     if (m.t === 'msg') {
