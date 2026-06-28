@@ -34,10 +34,8 @@ const MIME = {
 };
 
 const server = http.createServer(async (req, res) => {
-  // Cuentas / API primero.
-  if (await handleApi(req, res)) return;
-
   // Lista de salas ABIERTAS (no empezadas, no llenas) para entrar sin código.
+  // (Antes que handleApi, que atrapa todo /api/*.)
   if (req.url.split('?')[0] === '/api/rooms') {
     const list = [];
     for (const [code, room] of rooms) {
@@ -53,6 +51,9 @@ const server = http.createServer(async (req, res) => {
     res.end(JSON.stringify({ rooms: list }));
     return;
   }
+
+  // Cuentas / API.
+  if (await handleApi(req, res)) return;
 
   let urlPath = decodeURIComponent(req.url.split('?')[0]);
   if (urlPath === '/') urlPath = '/index.html';
