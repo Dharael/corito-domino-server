@@ -1,0 +1,13 @@
+{
+  "name": "corito-domino-server",
+  "version": "1.0.0",
+  "description": "Servidor relay para Corito Domino (salas por codigo).",
+  "main": "server.js",
+  "type": "module",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "ws": "^8.18.0"
+  }
+}

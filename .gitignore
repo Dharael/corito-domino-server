@@ -1,0 +1,8 @@
+# No subir al host:
+node_modules/
+data/
+test_client.mjs
+test_tunnel.mjs
+test_cf.mjs
+cloudflared.exe
+*.log
