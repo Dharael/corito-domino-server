@@ -15,6 +15,7 @@ function publicProfile(u) {
     vip: u.vip,
     table: u.table,
     tiles: u.tiles,
+    owned: u.owned || 'mesa_verde,ficha_blanco',
   };
 }
 
@@ -55,6 +56,7 @@ export async function handleApi(req, res) {
     const u = {
       key, username, salt, hash: hash(password, salt), token: newToken(),
       coins: 1000, rating: 1000, vip: false, table: 'verde', tiles: 'blanco',
+      owned: 'mesa_verde,ficha_blanco',
       createdAt: Date.now(),
     };
     await store.createUser(u);
@@ -90,6 +92,7 @@ export async function handleApi(req, res) {
     if (Number.isFinite(body.ratingDelta)) f.rating = (u.rating || 1000) + Math.floor(body.ratingDelta);
     if (typeof body.table === 'string') f.table = body.table;
     if (typeof body.tiles === 'string') f.tiles = body.tiles;
+    if (typeof body.owned === 'string') f.owned = body.owned;
     if (typeof body.vip === 'boolean') f.vip = body.vip;
     await store.updateUser(u.key || u.username, f);
     sendJson(res, 200, { profile: publicProfile({ ...u, ...f }) });

@@ -47,8 +47,10 @@ async function pgInit() {
       vip        BOOLEAN DEFAULT FALSE,
       "table"    TEXT DEFAULT 'verde',
       tiles      TEXT DEFAULT 'blanco',
+      owned      TEXT DEFAULT 'mesa_verde,ficha_blanco',
       created_at BIGINT
     );
+    ALTER TABLE users ADD COLUMN IF NOT EXISTS owned TEXT DEFAULT 'mesa_verde,ficha_blanco';
     CREATE TABLE IF NOT EXISTS friends (
       a TEXT NOT NULL,
       b TEXT NOT NULL,
@@ -91,9 +93,9 @@ const pgStore = {
   },
   async createUser(u) {
     await pool.query(
-      `INSERT INTO users (key, username, salt, hash, token, coins, rating, vip, "table", tiles, created_at)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)`,
-      [u.key, u.username, u.salt, u.hash, u.token, u.coins, u.rating, u.vip, u.table, u.tiles, u.createdAt]
+      `INSERT INTO users (key, username, salt, hash, token, coins, rating, vip, "table", tiles, owned, created_at)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)`,
+      [u.key, u.username, u.salt, u.hash, u.token, u.coins, u.rating, u.vip, u.table, u.tiles, u.owned, u.createdAt]
     );
   },
   async updateUser(name, f) {
