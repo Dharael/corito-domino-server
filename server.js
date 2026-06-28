@@ -11,6 +11,10 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { WebSocketServer } from 'ws';
 import { handleApi } from './auth.js';
+import { initStore } from './store.js';
+import { markOnlineByToken, markOffline } from './presence.js';
+
+await initStore();
 
 const PORT = process.env.PORT || 8080;
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -95,9 +99,16 @@ const broadcast = (room, obj, exceptId = null) => {
 };
 
 wss.on('connection', (ws) => {
-  ws.roomCode = null; ws.id = null;
-  ws.on('message', (raw) => {
+  ws.roomCode = null; ws.id = null; ws.userKey = null;
+  ws.on('message', async (raw) => {
     let m; try { m = JSON.parse(raw.toString()); } catch { return; }
+
+    // Autenticar la conexión para presencia online (amigos).
+    if (m.t === 'auth') {
+      if (ws.userKey) markOffline(ws.userKey);
+      ws.userKey = await markOnlineByToken(m.token);
+      return;
+    }
 
     if (m.t === 'create') {
       const code = makeCode();
@@ -135,6 +146,7 @@ wss.on('connection', (ws) => {
     }
   });
   ws.on('close', () => {
+    if (ws.userKey) markOffline(ws.userKey);
     const room = rooms.get(ws.roomCode);
     if (!room) return;
     room.clients.delete(ws.id); room.names.delete(ws.id);
