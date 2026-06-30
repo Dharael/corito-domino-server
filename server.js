@@ -56,6 +56,16 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
+  // Política de privacidad (requerida por Google Play).
+  if (req.url.split('?')[0] === '/privacy') {
+    fs.readFile(path.join(__dirname, 'privacy.html'), (err, data) => {
+      if (err) { res.writeHead(404); res.end('No encontrada'); return; }
+      res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+      res.end(data);
+    });
+    return;
+  }
+
   // Cuentas / API.
   if (await handleApi(req, res)) return;
 
